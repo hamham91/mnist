@@ -1,0 +1,8 @@
+Links:
+
+https://adeshpande3.github.io/adeshpande3.github.io/A-Beginner's-Guide-To-Understanding-Convolutional-Neural-Networks/
+http://neuralnetworksanddeeplearning.com/chap1.html
+https://github.com/mnielsen/neural-networks-and-deep-learning/blob/master/src/mnist_loader.py
+
+http://yann.lecun.com/exdb/mnist/
+

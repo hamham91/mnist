@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>mnist</title>
+</head>
+
+<body onload="init();">
+
+<h1>Draw a single digit in the large box and press Run!</h1>
+<canvas id="drawingCanvas" width="56" height="56" style="border: 2px solid"></canvas>
+<canvas id="displayCanvas" width="28" height="28" style="border: 2px solid"></canvas>
+</br>
+<input id="runButton" type="button" value="Run"/>
+<input id="clearButton" type="button" value="Clear"/>
+</br>
+<h1 id="resultText"></h1>
+
+<script type="text/javascript" src="mnist_parameters.js"></script>
+<script type="text/javascript">
+  var drawingCanvas, drawingCtx;
+  var displayCanvas, displayCtx;
+  var resultText;
+
+  var prevX, prevY, currX, currY;
+  var isMouseDown;
+
+  function init() {
+    drawingCanvas = document.getElementById('drawingCanvas');
+    drawingCtx = drawingCanvas.getContext('2d');
+
+    displayCanvas = document.getElementById('displayCanvas');
+    displayCtx = displayCanvas.getContext('2d');
+
+    resultText = document.getElementById('resultText');
+
+    prevX = prevY = currX = currY = 0.0;
+    isMouseDown = false;
+
+    document.getElementById('runButton').onclick = run;
+    document.getElementById('clearButton').onclick = clear;
+
+    drawingCanvas.addEventListener('mousemove', function (e) {
+      handleMouseEvent('move', e)
+    }, false);
+    drawingCanvas.addEventListener('mousedown', function (e) {
+      handleMouseEvent('down', e)
+    }, false);
+    drawingCanvas.addEventListener('mouseup', function (e) {
+      handleMouseEvent('up', e)
+    }, false);
+    drawingCanvas.addEventListener('mouseout', function (e) {
+      handleMouseEvent('out', e)
+    }, false);
+    return;
+  }
+
+  function drawPath() {
+    drawingCtx.beginPath();
+    drawingCtx.moveTo(prevX, prevY);
+    drawingCtx.lineTo(currX, currY);
+    drawingCtx.strokeStyle = 'black';
+    drawingCtx.lineWidth = 3;
+    drawingCtx.stroke();
+    drawingCtx.closePath();
+    return;
+  }
+
+  function handleMouseEvent(eventType, e) {
+    if (eventType === 'down') {
+      isMouseDown = true;
+      prevX = currX;
+      prevY = currY;
+      currX = e.clientX - drawingCanvas.offsetLeft;
+      currY = e.clientY - drawingCanvas.offsetTop;
+    } else if (eventType === 'move' && isMouseDown) {
+      prevX = currX;
+      prevY = currY;
+      currX = e.clientX - drawingCanvas.offsetLeft;
+      currY = e.clientY - drawingCanvas.offsetTop;
+      drawPath();
+    } else if (eventType === 'up' || eventType === 'out') {
+      isMouseDown = false;
+    }
+    return;
+  }
+
+  function run() {
+    displayCtx.drawImage(drawingCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+
+    var imageData = displayCtx.getImageData(0, 0, displayCanvas.width, displayCanvas.height);
+    var data = [];
+    for (var i = 0; i < (imageData.width * imageData.height); ++i) {
+      data.push(imageData.data[i * 4 + 3] / 255.0);
+    }
+    var result = feedForward(data);
+    resultText.innerHTML = 'I think your number is: ' + result.toString();
+  }
+
+  function clear() {
+    drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+    resultText.innerHTML = '';
+  }
+
+  function dot(x, y) {
+    var result = 0;
+    for (var i = 0; i < x.length; ++i) {
+      result += x[i] * y[i];
+    }
+    return (result);
+  }
+
+  function argmax(x) {
+    var max = x[0];
+    var maxIndex = 0;
+    for (var i = 1; i < x.length; ++i) {
+      if (x[i] > max) {
+        max = x[i];
+        maxIndex = i;
+      }
+    }
+    return (maxIndex);
+  }
+
+  function sigmoid(x) {
+    return (1.0 / (1.0 + Math.exp(-x)));
+  }
+
+  function feedForward(input) {
+    var output;
+    for (var i = 1; i < layer_sizes.length; ++i) {
+      output = [];
+      for (var j = 0; j < layer_sizes[i]; ++j) {
+        var weight = weights[i - 1][j];
+        var bias = biases[i - 1][j][0];
+        output.push(sigmoid(dot(weight, input) + bias));
+      }
+      input = output;
+    }
+    return (argmax(output));
+  }
+
+</script>
+
+</body>
+
+</html>
+
